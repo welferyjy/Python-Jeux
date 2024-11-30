@@ -1,0 +1,133 @@
+import pygame
+import time
+import random
+
+# Initialisation de pygame
+pygame.init()
+
+# Définir les couleurs
+blanc = (255, 255, 255)
+noir = (0, 0, 0)
+rouge = (213, 50, 80)
+vert = (0, 255, 0)
+bleu = (50, 153, 213)
+
+# Définir la taille de la fenêtre
+largeur_fenetre = 600
+hauteur_fenetre = 400
+
+# Créer la fenêtre
+fenetre = pygame.display.set_mode((largeur_fenetre, hauteur_fenetre))
+pygame.display.set_caption('Jeu de Serpent')
+
+# Définir la taille du serpent et la vitesse
+taille_serpent = 10
+vitesse_serpent = 15
+
+# Définir la police
+police_style = pygame.font.SysFont("bahnschrift", 25)
+police_score = pygame.font.SysFont("comicsansms", 35)
+
+# Fonction pour afficher le score
+def afficher_score(score):
+    valeur = police_score.render("Score : " + str(score), True, noir)
+    fenetre.blit(valeur, [0, 0])
+
+# Fonction principale du jeu
+def jeu():
+    jeu_en_cours = True
+    game_over = False
+
+    # Position initiale du serpent
+    x1 = largeur_fenetre / 2
+    y1 = hauteur_fenetre / 2
+    x1_changement = 0
+    y1_changement = 0
+
+    # Liste pour stocker les segments du serpent
+    corps_serpent = []
+    longueur_serpent = 1
+
+    # Générer la position de la nourriture
+    nourriture_x = round(random.randrange(0, largeur_fenetre - taille_serpent) / 10.0) * 10.0
+    nourriture_y = round(random.randrange(0, hauteur_fenetre - taille_serpent) / 10.0) * 10.0
+
+    while jeu_en_cours:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                jeu_en_cours = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    x1_changement = -taille_serpent
+                    y1_changement = 0
+                elif event.key == pygame.K_RIGHT:
+                    x1_changement = taille_serpent
+                    y1_changement = 0
+                elif event.key == pygame.K_UP:
+                    y1_changement = -taille_serpent
+                    x1_changement = 0
+                elif event.key == pygame.K_DOWN:
+                    y1_changement = taille_serpent
+                    x1_changement = 0
+
+        # Si le serpent touche les bords
+        if x1 >= largeur_fenetre or x1 < 0 or y1 >= hauteur_fenetre or y1 < 0:
+            game_over = True
+
+        x1 += x1_changement
+        y1 += y1_changement
+        fenetre.fill(bleu)
+
+        # Dessiner la nourriture
+        pygame.draw.rect(fenetre, vert, [nourriture_x, nourriture_y, taille_serpent, taille_serpent])
+
+        # Ajouter le corps du serpent
+        corps_serpent.append([x1, y1])
+        if len(corps_serpent) > longueur_serpent:
+            del corps_serpent[0]
+
+        # Vérifier si le serpent se mord
+        for segment in corps_serpent[:-1]:
+            if segment == [x1, y1]:
+                game_over = True
+
+        for segment in corps_serpent:
+            pygame.draw.rect(fenetre, noir, [segment[0], segment[1], taille_serpent, taille_serpent])
+
+        afficher_score(longueur_serpent - 1)
+
+        pygame.display.update()
+
+        # Si le serpent mange la nourriture
+        if x1 == nourriture_x and y1 == nourriture_y:
+            nourriture_x = round(random.randrange(0, largeur_fenetre - taille_serpent) / 10.0) * 10.0
+            nourriture_y = round(random.randrange(0, hauteur_fenetre - taille_serpent) / 10.0) * 10.0
+            longueur_serpent += 1
+
+        # Limiter la vitesse du jeu
+        pygame.time.Clock().tick(vitesse_serpent)
+
+        # Afficher l'écran Game Over
+        while game_over:
+            fenetre.fill(bleu)
+            message = police_style.render("Game Over! Appuyez sur C pour recommencer ou Q pour quitter", True, rouge)
+            fenetre.blit(message, [largeur_fenetre / 6, hauteur_fenetre / 3])
+            afficher_score(longueur_serpent - 1)
+            pygame.display.update()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    game_over = False
+                    jeu_en_cours = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_q:
+                        game_over = False
+                        jeu_en_cours = False
+                    if event.key == pygame.K_c:
+                        jeu()
+
+    pygame.quit()
+    quit()
+
+# Lancer le jeu
+jeu()
